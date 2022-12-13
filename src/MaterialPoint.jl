@@ -2,6 +2,8 @@
 # Material point
 # ------------------------------------------------------------------------------
 
+using LinearAlgebra
+
 mutable struct MaterialPoint
     # internal state data
     m::Float64
@@ -43,12 +45,12 @@ mutable struct MaterialPoint
         volume,
         position,
         velocity,
-        zeros(2),
+        velocity * mass,
         externalforce,
         [false, false],
         zeros(2, 4),
-        eye(2, 2),
-        eye(2, 2),
+        I(2),
+        I(2),
         E,
         ν,
         zeros(3),

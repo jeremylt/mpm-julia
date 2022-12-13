@@ -62,6 +62,15 @@ mutable struct Grid
             end
         end;
 
+        # print information
+        println("Background grid:");
+        println("  x range: ", 0.0, " - ", length_x);
+        println("  y range: ", 0.0, " - ", length_y);
+        println("  number columns (x): ", numnodes_x);
+        println("  number rows (y): ", numnodes_y);
+        println("  total gridpoints: ", numnodes);
+        println();
+
         # constructor
         new(
             [length_x, length_y],
