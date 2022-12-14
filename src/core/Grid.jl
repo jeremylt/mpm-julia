@@ -90,6 +90,7 @@ end
 function resetgrid(grid::Grid)
     for point in grid.points
         point.m = 0.0
+        point.v = [0.0, 0.0]
         point.p = [0.0, 0.0]
         point.f = [0.0, 0.0]
     end
@@ -152,7 +153,7 @@ function transfergridtomaterialpoint(materialpoint::MaterialPoint, dt::Float64, 
         interpolation, gradient = getbasismatrices(materialpoint, gridpoint, grid)
 
         v = zeros(2)
-        if (gridpoint.m > 1.0e-8)
+        if (gridpoint.m > 1.0e-12)
             v = gridpoint.p / gridpoint.m
             materialpoint.v += dt * (interpolation * gridpoint.f / gridpoint.m)
             dx += dt * (interpolation * gridpoint.p / gridpoint.m)
@@ -179,6 +180,78 @@ function transfergridtomaterialpoint(materialpoint::MaterialPoint, dt::Float64, 
     materialpoint.σ[1] += k * ((1.0 - ν) * dε[1] + ν * dε[2])
     materialpoint.σ[2] += k * ((1.0 - ν) * dε[2] + ν * dε[1])
     materialpoint.σ[3] += k * ((0.5 - ν) * dε[3])
+
+    # volume and momentum
+    materialpoint.V = det(materialpoint.F) * materialpoint.V_0
+    materialpoint.p = materialpoint.v * materialpoint.m
+end
+
+function transfergridtomaterialpointwithyieldpass1(
+    materialpoint::MaterialPoint,
+    dt::Float64,
+    grid::Grid,
+)
+    # transfer to material point from all adjacent grid points
+    adjacentgridindices = getadjacentgridindices(materialpoint, grid)
+
+    # accumulate adjustments from grid points
+    for index in adjacentgridindices
+        gridpoint = grid.points[index]
+
+        interpolation, gradient = getbasismatrices(materialpoint, gridpoint, grid)
+        materialpoint.v += dt * (interpolation * gridpoint.f / gridpoint.m)
+    end
+
+    # adjust grid point velocity
+    for index in adjacentgridindices
+        gridpoint = grid.points[index]
+
+        interpolation, gradient = getbasismatrices(materialpoint, gridpoint, grid)
+        gridpoint.v += interpolation * materialpoint.m * materialpoint.v / gridpoint.m
+    end
+end
+
+function transfergridtomaterialpointwithyieldpass2(
+    materialpoint::MaterialPoint,
+    dt::Float64,
+    grid::Grid,
+)
+    # transfer to material point from all adjacent grid points
+    adjacentgridindices = getadjacentgridindices(materialpoint, grid)
+
+    # accumulate adjustments from grid points
+    dx = zeros(2)
+    for index in adjacentgridindices
+        gridpoint = grid.points[index]
+
+        interpolation, gradient = getbasismatrices(materialpoint, gridpoint, grid)
+
+        if (gridpoint.m > 1.0e-12)
+            dx += dt * (interpolation * gridpoint.p / gridpoint.m)
+            materialpoint.dF += dt * gridpoint.v * gradient'
+        end
+    end
+
+    # update material point
+    materialpoint.x += dx
+    materialpoint.F = materialpoint.dF * materialpoint.F
+
+    # stress
+    dε = zeros(3)
+    dε[1] = materialpoint.dF[1, 1] - 1.0
+    dε[2] = materialpoint.dF[2, 2] - 1.0
+    dε[3] = materialpoint.dF[1, 2] + materialpoint.dF[2, 1]
+    materialpoint.ε += dε
+    materialpoint.dF = I(2)
+
+    # strain
+    dσ, dε_plastic, dα = incrementstrainplastic(materialpoint)
+    ε_current = materialpoint.ε
+    σ_current = materialpoint.σ
+    ε_plastic_current = materialpoint.ε_plastic
+    materialpoint.σ += dσ
+    materialpoint.ε_plastic += dε_plastic
+    materialpoint.α += dα
 
     # volume and momentum
     materialpoint.V = det(materialpoint.F) * materialpoint.V_0

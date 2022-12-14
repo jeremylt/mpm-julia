@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------
-# 2D example - two discs
+# 2D example - plate and disc
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
@@ -23,34 +23,56 @@ include("core/MPM.jl")
 function main()
     # physical constants
     g = 0.0
-    ρ = 1000.0       # density
-    E = 1000.0       # Young's modulus
-    ν = 0.3          # Poisson's ratio
-    σ_yield = 1.0e24 # yield stress
 
     # setup grid
     println("--------- Background grid ---------")
-    numcells = 20
-    grid = Grid(1.0, 1.0, numcells + 1, numcells + 1)
+    numcells = 25
+    grid = Grid(60.0, 60.0, numcells + 1, numcells + 1)
 
-    # setup disc parameters
-    radius = 0.2
-    pointsize = radius / 8.0
+    # boundary
+    for gridpoint in grid.points
+        if (gridpoint.x[1] == 0.0 || gridpoint.x[1] == 60.0 || gridpoint.x[2] == 0.0)
+            gridpoint.isfixed[1] = true
+            gridpoint.isfixed[2] = true
+        end
+    end
 
-    # first disc
-    println("--------- First disc ---------")
-    center = [0.2, 0.2]
-    firstdisc =
-        creatediscmaterialdomain(center, radius, pointsize, [0.1, 0.1], g, ρ, E, ν, σ_yield)
+    # Plate
+    println("--------- Plate ---------")
+    ρ = 2700e-12    # density
+    E = 78.2e3      # Young's modulus
+    ν = 0.3         # Poisson's ratio
+    σ_yield = 300.0 # yield stress
+    lowerleftcorner = [0.0, 0.0]
+    width = 60.0
+    height = 40.0
+    pointsize = width / 50
+    plate = createboxmaterialdomain(
+        lowerleftcorner,
+        width,
+        height,
+        pointsize,
+        [0.0, 0.0],
+        g,
+        ρ,
+        E,
+        ν,
+        σ_yield,
+    )
 
-    # second disc
-    println("--------- Second disc ---------")
-    center = [0.8, 0.8]
-    seconddisc = creatediscmaterialdomain(
+    # Disc
+    ρ = 7850e-12     # density
+    E = 200.0e3      # Young's modulus
+    ν = 0.3          # Poisson's ratio
+    σ_yield = 1.0e24 # yield stress
+    radius = 9.6 / 2.0
+    println("--------- Disc ---------")
+    center = [30.0, 50.0]
+    disc = creatediscmaterialdomain(
         center,
         radius,
         pointsize,
-        [-0.1, -0.1],
+        [0.0, -1160.0e3],
         g,
         ρ,
         E,
@@ -59,7 +81,7 @@ function main()
     )
 
     # all material points
-    materialpoints = [firstdisc; seconddisc]
+    materialpoints = [plate; disc]
     totalmass = 0.0
     for point in materialpoints
         totalmass += point.m
@@ -70,14 +92,14 @@ function main()
     println()
 
     # plotted quantities
-    plotincrement = 50
+    plotincrement = 100
     times = []
     strainenergies = []
     kineticenergies = []
 
     # time stepping loop
-    dt = 1.0e-3
-    t_f = 3.8e0
+    dt = 1.0e-8
+    t_f = 1.0e-4
     println("--------- Time stepping loop ---------")
     println("  start time: ", 0.0)
     println("  stop time: ", t_f)
@@ -96,13 +118,13 @@ function main()
                 materialpoints_x,
                 materialpoints_y,
                 aspect_ratio = :equal,
-                lims = [0.0, 1.0],
-                title = "Two Disc MPM",
+                lims = [0.0, 60.0],
+                title = "Plate and Disc MPM",
                 label = "",
                 xlabel = "x",
                 ylabel = "y",
             )
-            savefig("TwoDisc-$(@sprintf("%0.3f", t)).png")
+            savefig("PlateDisc-$(@sprintf("%0.8f", t)).png")
         end
 
         @time "  material points to grid points" begin
@@ -134,8 +156,24 @@ function main()
 
         # grid to material points
         @time "  grid points to material points" begin
+            # first pass
             for materialpoint in materialpoints
-                transfergridtomaterialpoint(materialpoint, dt, grid)
+                transfergridtomaterialpointwithyieldpass1(materialpoint, dt, grid)
+            end
+
+            # boundary conditions
+            for gridpoint in grid.points
+                if (gridpoint.isfixed[1])
+                    gridpoint.v[1] = 0.0
+                end
+                if (gridpoint.isfixed[2])
+                    gridpoint.v[2] = 0.0
+                end
+            end
+
+            # second pass
+            for materialpoint in materialpoints
+                transfergridtomaterialpointwithyieldpass2(materialpoint, dt, grid)
             end
         end
 
@@ -182,7 +220,7 @@ function main()
         label = ["Strain Energy" "Kinetic Energy"],
         xlabel = "time",
     )
-    savefig("TwoDisc-StrainEnergyAndKineticEnergy.png")
+    savefig("PlateDisc-StrainEnergyAndKineticEnergy.png")
 end
 
 # ------------------------------------------------------------------------------

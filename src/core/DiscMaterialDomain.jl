@@ -13,6 +13,7 @@ function creatediscmaterialdomain(
     density::Float64,
     E::Float64,
     ν::Float64,
+    σ_yield::Float64,
 )
     # adjust radius as multiple of pointsize
     radius = floor(radius / pointsize) * pointsize
@@ -36,6 +37,7 @@ function creatediscmaterialdomain(
                         [0.0, gravity * mass],
                         E,
                         ν,
+                        σ_yield,
                     ),
                 )
             end
@@ -55,6 +57,7 @@ function creatediscmaterialdomain(
     println("  number of material points: ", length(domain))
     println("  Young's modulus: ", domain[1].E)
     println("  Poisson's ratio: ", domain[1].ν)
+    println("  Yield stress: ", domain[1].σ_yield)
     println()
 
     # return

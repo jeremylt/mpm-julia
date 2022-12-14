@@ -3,6 +3,7 @@
 # ------------------------------------------------------------------------------
 
 include("MaterialPoint.jl")
+include("BoxMaterialDomain.jl")
 include("DiscMaterialDomain.jl")
 include("GridPoint.jl")
 include("Grid.jl")
