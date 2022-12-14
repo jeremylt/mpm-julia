@@ -21,6 +21,9 @@ include("core/MPM.jl")
 # ------------------------------------------------------------------------------
 
 function main()
+    # domain parameters
+    domainsize = 1.0
+
     # physical constants
     g = 0.0
     ρ = 1000.0       # density
@@ -31,7 +34,7 @@ function main()
     # setup grid
     println("--------- Background grid ---------")
     numcells = 20
-    grid = Grid(1.0, 1.0, numcells + 1, numcells + 1)
+    grid = Grid(domainsize, domainsize, numcells + 1, numcells + 1)
 
     # setup disc parameters
     radius = 0.2
@@ -96,7 +99,7 @@ function main()
                 materialpoints_x,
                 materialpoints_y,
                 aspect_ratio = :equal,
-                lims = [0.0, 1.0],
+                lims = [0.0, domainsize],
                 title = "Two Disc MPM",
                 label = "",
                 xlabel = "x",

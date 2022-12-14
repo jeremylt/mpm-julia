@@ -21,17 +21,20 @@ include("core/MPM.jl")
 # ------------------------------------------------------------------------------
 
 function main()
+    # domain parameters
+    domainsize = 60.0
+
     # physical constants
     g = 0.0
 
     # setup grid
     println("--------- Background grid ---------")
-    numcells = 25
-    grid = Grid(60.0, 60.0, numcells + 1, numcells + 1)
+    numcells = 31
+    grid = Grid(domainsize, domainsize, numcells + 1, numcells + 1)
 
     # boundary
     for gridpoint in grid.points
-        if (gridpoint.x[1] == 0.0 || gridpoint.x[1] == 60.0 || gridpoint.x[2] == 0.0)
+        if (gridpoint.x[1] == 0.0 || gridpoint.x[1] == domainsize || gridpoint.x[2] == 0.0)
             gridpoint.isfixed[1] = true
             gridpoint.isfixed[2] = true
         end
@@ -44,9 +47,9 @@ function main()
     ν = 0.3         # Poisson's ratio
     σ_yield = 300.0 # yield stress
     lowerleftcorner = [0.0, 0.0]
-    width = 60.0
-    height = 40.0
-    pointsize = width / 50
+    width = domainsize
+    height = domainsize * 2 / 3
+    pointsize = width / numcells / 2
     plate = createboxmaterialdomain(
         lowerleftcorner,
         width,
@@ -65,9 +68,9 @@ function main()
     E = 200.0e3      # Young's modulus
     ν = 0.3          # Poisson's ratio
     σ_yield = 1.0e24 # yield stress
-    radius = 9.6 / 2.0
+    radius = domainsize / 12.0
     println("--------- Disc ---------")
-    center = [30.0, 50.0]
+    center = [domainsize / 2.0, domainsize * 5.0 / 6.0]
     disc = creatediscmaterialdomain(
         center,
         radius,
@@ -118,7 +121,7 @@ function main()
                 materialpoints_x,
                 materialpoints_y,
                 aspect_ratio = :equal,
-                lims = [0.0, 60.0],
+                lims = [0.0, domainsize],
                 title = "Plate and Disc MPM",
                 label = "",
                 xlabel = "x",
