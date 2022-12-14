@@ -36,27 +36,27 @@ mutable struct Grid
     length::Array{Float64} # length in x and y directions
     shape::Array{Int64}
     numnodes::Int64
-    v_cell::Array{Float64} # size of each cell/element
-    v_cell_inv::Array{Float64} # inverse of size of each cell
+    dx::Array{Float64} # size of each cell/element
+    dx_inv::Array{Float64} # inverse of size of each cell
     points::Array{GridPoint} # array of all grid points
 
     # constructor
     Grid(length_x::Float64, length_y::Float64, numnodes_x::Int64, numnodes_y::Int64) = (
         # cell sizes
-        v_cell = zeros(2);
-        v_cell_inv = zeros(2);
-        v_cell[1] = length_x / Float64(numnodes_x - 1.0);
-        v_cell[2] = length_y / Float64(numnodes_y - 1.0);
-        v_cell_inv[1] = 1.0 / v_cell[1];
-        v_cell_inv[2] = 1.0 / v_cell[2];
+        dx = zeros(2);
+        dx_inv = zeros(2);
+        dx[1] = length_x / Float64(numnodes_x - 1.0);
+        dx[2] = length_y / Float64(numnodes_y - 1.0);
+        dx_inv[1] = 1.0 / dx[1];
+        dx_inv[2] = 1.0 / dx[2];
 
         # grid points array
         numnodes = numnodes_x * numnodes_y;
         gridpoints = Array{GridPoint}(undef, numnodes);
         for j = 1:numnodes_y
-            y = (j - 1) * v_cell[2]
+            y = (j - 1) * dx[2]
             for i = 1:numnodes_x
-                x = (i - 1) * v_cell[1]
+                x = (i - 1) * dx[1]
                 index = index2Dto1D(i, j, numnodes_x, numnodes_y)
                 gridpoints[index] = GridPoint(x, y)
             end
@@ -76,8 +76,8 @@ mutable struct Grid
             [length_x, length_y],
             [numnodes_x, numnodes_y],
             numnodes,
-            v_cell,
-            v_cell_inv,
+            dx,
+            dx_inv,
             gridpoints,
         )
     )
@@ -89,12 +89,12 @@ end
 
 function getadjacentgridindices(materialpoint::MaterialPoint, grid::Grid)
     # cell sizes
-    celllength_x = grid.v_cell[1]
-    celllength_y = grid.v_cell[2]
+    celllength_x = grid.dx[1]
+    celllength_y = grid.dx[2]
 
     # find row/column index
-    cellcolumn = floor(materialpoint.x[1] * celllength_x) + 1
-    cellrow = floor(materialpoint.x[2] * celllength_y) + 1
+    cellcolumn = Int64(floor(materialpoint.x[1] * celllength_x) + 1)
+    cellrow = Int64(floor(materialpoint.x[2] * celllength_y) + 1)
 
     # check bounds
     if (cellcolumn < 1 || cellcolumn > grid.shape[1])
@@ -110,6 +110,83 @@ function getadjacentgridindices(materialpoint::MaterialPoint, grid::Grid)
 
     # return
     [firstpoint, secondpoint, firstpoint + 1, secondpoint + 1]
+end
+
+function transfermaterialpointtogrid(materialpoint::MaterialPoint, grid::Grid)
+    # transfer material point to all adjacent grid points
+    adjacentgridindices = getadjacentgridindices(materialpoint, grid)
+    for index in adjacentgridindices
+        gridpoint = grid.points[index]
+
+        interpolation, gradient = getbasismatrices(materialpoint, gridpoint, grid)
+
+        gridpoint.m += interpolation * materialpoint.m
+        gridpoint.p += interpolation * materialpoint.m * materialpoint.v
+        gridpoint.f += materialpoint.f_external
+        gridpoint.f[1] -=
+            materialpoint.V *
+            (gradient[1] * materialpoint.σ[1] + gradient[2] * materialpoint.σ[3])
+        gridpoint.f[2] -=
+            materialpoint.V *
+            (gradient[2] * materialpoint.σ[2] + gradient[1] * materialpoint.σ[3])
+    end
+end
+
+function transfergridtomaterialpoint(materialpoint::MaterialPoint, dt::Float64, grid::Grid)
+    # transfer to material point from all adjacent grid points
+    adjacentgridindices = getadjacentgridindices(materialpoint, grid)
+
+    # accumulate adjustments from grid points
+    dx = zeros(2)
+    for index in adjacentgridindices
+        gridpoint = grid.points[index]
+
+        interpolation, gradient = getbasismatrices(materialpoint, gridpoint, grid)
+
+        v = zeros(2)
+        if (gridpoint.m > 1.0e-8)
+            v = gridpoint.p / gridpoint.m
+            materialpoint.v += dt * (interpolation * gridpoint.f / gridpoint.m)
+            dx += dt * (interpolation * gridpoint.p / gridpoint.m)
+        end
+        materialpoint.dF += dt * dx * gradient'
+    end
+
+    # update material point
+    materialpoint.x += dx
+    materialpoint.dF = materialpoint.dF * materialpoint.dF
+
+    # stess
+    dσ = zeros(3)
+    dσ[1] = materialpoint.dF[1, 1] - 1.0
+    dσ[2] = materialpoint.dF[2, 2] - 1.0
+    dσ[3] = materialpoint.dF[1, 2] + materialpoint.dF[2, 1]
+    materialpoint.σ += dσ
+    materialpoint.dF = I(2)
+
+    # strain
+    E = materialpoint.E
+    ν = materialpoint.ν
+    k = E / (1.0 + ν) / (1.0 - 2.0 * ν)
+    materialpoint.ε[1] += k * ((1.0 - ν) * dσ[1] + ν * dσ[2])
+    materialpoint.ε[2] += k * ((1.0 - ν) * dσ[2] + ν * dσ[1])
+    materialpoint.ε[3] += k * ((0.5 - ν) * dσ[3])
+
+    # volume and momentum
+    materialpoint.V = det(materialpoint.F) * materialpoint.V_0
+    materialpoint.p = materialpoint.v * materialpoint.m
+end
+
+# ------------------------------------------------------------------------------
+# reset grid
+# ------------------------------------------------------------------------------
+
+function resetgrid(grid::Grid)
+    for point in grid.points
+        point.m = 0.0
+        point.p = [0.0, 0.0]
+        point.f = [0.0, 0.0]
+    end
 end
 
 # ------------------------------------------------------------------------------

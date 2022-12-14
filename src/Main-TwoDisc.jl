@@ -10,6 +10,7 @@ include("MaterialPoint.jl")
 include("DiscMaterialDomain.jl")
 include("GridPoint.jl")
 include("Grid.jl")
+include("Basis.jl")
 
 # ------------------------------------------------------------------------------
 # driver
@@ -51,6 +52,45 @@ function main()
     println("--------- Total material points ---------")
     println("  mass: ", totalmass)
     println("  number of material points: ", length(materialpoints))
+    println()
+
+    # time stepping loop
+    dt = 1.0e-3
+    t_f = 3.5e0
+    println("--------- Time stepping loop ---------")
+    println("  start time: ", 0.0)
+    println("  stop time: ", t_f)
+    println("  step size: ", dt)
+    println()
+    for t = 0.0:dt:t_f
+        # reset grid
+        resetgrid(grid)
+
+        # material points to grid
+        for materialpoint in materialpoints
+            transfermaterialpointtogrid(materialpoint, grid)
+        end
+
+        # solve grid momentum
+        for gridpoint in grid.points
+            gridpoint.p += gridpoint.f * dt
+
+            # boundary conditions
+            if (gridpoint.isfixed[1])
+                gridpoint.p[1] = 0.0
+                gridpoint.f[1] = 0.0
+            end
+            if (gridpoint.isfixed[2])
+                gridpoint.p[2] = 0.0
+                gridpoint.f[2] = 0.0
+            end
+        end
+
+        # grid to material points
+        for materialpoint in materialpoints
+            transfergridtomaterialpoint(materialpoint, dt, grid)
+        end
+    end
 end
 
 # ------------------------------------------------------------------------------
