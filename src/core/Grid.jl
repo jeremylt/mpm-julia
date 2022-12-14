@@ -84,17 +84,25 @@ mutable struct Grid
 end
 
 # ------------------------------------------------------------------------------
+# reset grid
+# ------------------------------------------------------------------------------
+
+function resetgrid(grid::Grid)
+    for point in grid.points
+        point.m = 0.0
+        point.p = [0.0, 0.0]
+        point.f = [0.0, 0.0]
+    end
+end
+
+# ------------------------------------------------------------------------------
 # material point to grid transfer
 # ------------------------------------------------------------------------------
 
 function getadjacentgridindices(materialpoint::MaterialPoint, grid::Grid)
-    # cell sizes
-    celllength_x = grid.dx[1]
-    celllength_y = grid.dx[2]
-
     # find row/column index
-    cellcolumn = Int64(floor(materialpoint.x[1] * celllength_x) + 1)
-    cellrow = Int64(floor(materialpoint.x[2] * celllength_y) + 1)
+    cellcolumn = Int64(floor(materialpoint.x[1] * grid.dx_inv[1]) + 1)
+    cellrow = Int64(floor(materialpoint.x[2] * grid.dx_inv[2]) + 1)
 
     # check bounds
     if (cellcolumn < 1 || cellcolumn > grid.shape[1])
@@ -149,44 +157,32 @@ function transfergridtomaterialpoint(materialpoint::MaterialPoint, dt::Float64, 
             materialpoint.v += dt * (interpolation * gridpoint.f / gridpoint.m)
             dx += dt * (interpolation * gridpoint.p / gridpoint.m)
         end
-        materialpoint.dF += dt * dx * gradient'
+        materialpoint.dF += dt * v * gradient'
     end
 
     # update material point
     materialpoint.x += dx
-    materialpoint.dF = materialpoint.dF * materialpoint.dF
+    materialpoint.F = materialpoint.dF * materialpoint.F
 
-    # stess
-    dσ = zeros(3)
-    dσ[1] = materialpoint.dF[1, 1] - 1.0
-    dσ[2] = materialpoint.dF[2, 2] - 1.0
-    dσ[3] = materialpoint.dF[1, 2] + materialpoint.dF[2, 1]
-    materialpoint.σ += dσ
+    # stress
+    dε = zeros(3)
+    dε[1] = materialpoint.dF[1, 1] - 1.0
+    dε[2] = materialpoint.dF[2, 2] - 1.0
+    dε[3] = materialpoint.dF[1, 2] + materialpoint.dF[2, 1]
+    materialpoint.ε += dε
     materialpoint.dF = I(2)
 
     # strain
     E = materialpoint.E
     ν = materialpoint.ν
     k = E / (1.0 + ν) / (1.0 - 2.0 * ν)
-    materialpoint.ε[1] += k * ((1.0 - ν) * dσ[1] + ν * dσ[2])
-    materialpoint.ε[2] += k * ((1.0 - ν) * dσ[2] + ν * dσ[1])
-    materialpoint.ε[3] += k * ((0.5 - ν) * dσ[3])
+    materialpoint.σ[1] += k * ((1.0 - ν) * dε[1] + ν * dε[2])
+    materialpoint.σ[2] += k * ((1.0 - ν) * dε[2] + ν * dε[1])
+    materialpoint.σ[3] += k * ((0.5 - ν) * dε[3])
 
     # volume and momentum
     materialpoint.V = det(materialpoint.F) * materialpoint.V_0
     materialpoint.p = materialpoint.v * materialpoint.m
-end
-
-# ------------------------------------------------------------------------------
-# reset grid
-# ------------------------------------------------------------------------------
-
-function resetgrid(grid::Grid)
-    for point in grid.points
-        point.m = 0.0
-        point.p = [0.0, 0.0]
-        point.f = [0.0, 0.0]
-    end
 end
 
 # ------------------------------------------------------------------------------

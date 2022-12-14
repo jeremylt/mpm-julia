@@ -2,6 +2,8 @@
 # domain of MaterialPoints in a disc
 # ------------------------------------------------------------------------------
 
+using Printf
+
 function creatediscmaterialdomain(
     center::Array{Float64},
     radius::Float64,
@@ -48,7 +50,8 @@ function creatediscmaterialdomain(
     println("Disc domain:")
     println("  center: ", center)
     println("  radius: ", radius)
-    println("  mass: ", discmass)
+    println("  total mass: ", @sprintf("%.3f", discmass))
+    println("  veloctiy (x, y): (", domain[1].v[1], ", ", domain[1].v[2], ")")
     println("  number of material points: ", length(domain))
     println("  Young's modulus: ", domain[1].E)
     println("  Poisson's ratio: ", domain[1].ν)

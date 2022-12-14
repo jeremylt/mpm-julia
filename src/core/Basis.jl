@@ -9,6 +9,12 @@ function getbasismatrices(materialpoint::MaterialPoint, gridpoint::GridPoint, gr
     shape = zeros(2)
     shape[1] = 1.0 - abs(distance[1]) / grid.dx[1]
     shape[2] = 1.0 - abs(distance[2]) / grid.dx[2]
+    if (shape[1] < 0.0)
+        shape[1] = 0.0
+    end
+    if (shape[2] < 0.0)
+        shape[2] = 0.0
+    end
 
     # gradient
     gradient = zeros(2)
