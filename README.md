@@ -11,3 +11,7 @@ The paper this code is based upon can be found in the `paper` folder.
 ## Code
 
 The example and supporting code is found in the `src` folder.
+
+## Original Code
+
+See the original repository [here](https://github.com/vinhphunguyen/MPM-Julia).
