@@ -29,7 +29,7 @@ function main()
 
     # setup grid
     println("--------- Background grid ---------")
-    numcells = 31
+    numcells = 50
     grid = Grid(domainsize, domainsize, numcells + 1, numcells + 1)
 
     # boundary
@@ -48,8 +48,8 @@ function main()
     σ_yield = 300.0 # yield stress
     lowerleftcorner = [0.0, 0.0]
     width = domainsize
-    height = domainsize * 2 / 3
-    pointsize = width / numcells / 2
+    height = domainsize * 2.0 / 3.0
+    pointsize = width / numcells / 2.0
     plate = createboxmaterialdomain(
         lowerleftcorner,
         width,
