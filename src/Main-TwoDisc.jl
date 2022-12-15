@@ -73,7 +73,7 @@ function main()
     end
     println("--------- Total material points ---------")
     println("  mass: ", totalmass)
-    println("  total energy: ", strainenergy + kineticenergy)
+    println("  total energy: ", totalenergy)
     println("  number of material points: ", length(materialpoints))
     println()
 
@@ -88,6 +88,7 @@ function main()
     times = []
     strainenergies = []
     kineticenergies = []
+    energylosses = []
 
     # time stepping loop
     dt = 1.0e-3
@@ -164,10 +165,12 @@ function main()
             kineticenergy +=
                 0.5 * (materialpoint.v[1]^2 + materialpoint.v[2]^2) * materialpoint.m
         end
+        energyloss = totalenergy - (strainenergy + kineticenergy)
         if (step % plotincrement == 0)
             push!(times, t)
             push!(strainenergies, strainenergy)
             push!(kineticenergies, kineticenergy)
+            push!(energylosses, energyloss)
         end
 
         # log progress
@@ -184,7 +187,13 @@ function main()
         println("  strain energy: ", strainenergy)
         println("  kinetic energy: ", kineticenergy)
         println("  total energy: ", strainenergy + kineticenergy)
-        println("  energy loss: ", totalenergy - (strainenergy + kineticenergy))
+        println(
+            "  energy loss: ",
+            energyloss,
+            " (",
+            100.0 * abs(energyloss) / totalenergy,
+            "%)",
+        )
         println()
 
         # increment plot step counter
@@ -194,9 +203,9 @@ function main()
     # plotting
     plot(
         times,
-        [strainenergies, kineticenergies],
+        [strainenergies, kineticenergies, energylosses],
         title = "Strain Energy and Kinetic Energy",
-        label = ["Strain Energy" "Kinetic Energy"],
+        label = ["Strain Energy" "Kinetic Energy" "Energy Loss"],
         xlabel = "time",
     )
     savefig("TwoDisc-StrainEnergyAndKineticEnergy.png")
