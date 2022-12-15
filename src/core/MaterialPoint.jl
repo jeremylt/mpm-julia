@@ -72,9 +72,9 @@ end
 # ------------------------------------------------------------------------------
 
 function computecolor(materialpoint::MaterialPoint, Ethreshold::Float64)
-    index = min(1.0, materialpoint.α * materialpoint.E / (500.0 * materialpoint.σ_yield))
-
     if (materialpoint.E < Ethreshold)
+        index =
+            min(1.0, materialpoint.α * materialpoint.E / (500.0 * materialpoint.σ_yield))
         color = RGB(index, 0.5 * index, 1.0 - index)
     else
         color = RGB(1.0, 0.0, 0.0)
