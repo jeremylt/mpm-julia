@@ -5,7 +5,7 @@
 
 # ------------------------------------------------------------------------------
 # Libraries
-#   Note: needs to be installed to use
+#   Note: Plots needs to be installed to use
 # ------------------------------------------------------------------------------
 
 using Printf
