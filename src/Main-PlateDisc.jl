@@ -104,6 +104,7 @@ function main()
     times = []
     strainenergies = []
     kineticenergies = []
+    totalenergies = []
     energylosses = []
 
     # time stepping loop
@@ -202,6 +203,7 @@ function main()
             push!(times, t)
             push!(strainenergies, strainenergy)
             push!(kineticenergies, kineticenergy)
+            push!(totalenergies, strainenergy + kineticenergy)
             push!(energylosses, energyloss)
         end
 
@@ -235,9 +237,9 @@ function main()
     # plotting
     plot(
         times,
-        [strainenergies, kineticenergies, energyloss],
+        [strainenergies, kineticenergies, totalenergies, energylosses],
         title = "Strain Energy and Kinetic Energy",
-        label = ["Strain Energy" "Kinetic Energy" "Energy Loss"],
+        label = ["Strain Energy" "Kinetic Energy" "Total Energy" "Energy Loss"],
         xlabel = "time",
     )
     savefig("PlateDisc-StrainEnergyAndKineticEnergy.png")
