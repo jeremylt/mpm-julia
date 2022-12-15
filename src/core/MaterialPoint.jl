@@ -68,7 +68,23 @@ mutable struct MaterialPoint
 end
 
 # ------------------------------------------------------------------------------
-# Plastic strain increment
+# color for plotting 
+# ------------------------------------------------------------------------------
+
+function computecolor(materialpoint::MaterialPoint, Ethreshold::Float64)
+    index = min(1.0, materialpoint.α * materialpoint.E / (500.0 * materialpoint.σ_yield))
+
+    if (materialpoint.E < Ethreshold)
+        color = RGB(index, 0.5 * index, 1.0 - index)
+    else
+        color = RGB(1.0, 0.0, 0.0)
+    end
+
+    color
+end
+
+# ------------------------------------------------------------------------------
+# plastic strain increment
 # ------------------------------------------------------------------------------
 
 function incrementstrainplastic(materialpoint::MaterialPoint)

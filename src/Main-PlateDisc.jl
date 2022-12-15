@@ -144,9 +144,12 @@ function main()
             println("  plotting current location")
             materialpoints_x = [materialpoint.x[1] for materialpoint in materialpoints]
             materialpoints_y = [materialpoint.x[2] for materialpoint in materialpoints]
+            materialpoints_color =
+                [computecolor(materialpoint, E) for materialpoint in materialpoints]
             scatter(
                 materialpoints_x,
                 materialpoints_y,
+                color = materialpoints_color,
                 aspect_ratio = :equal,
                 lims = [0.0, domainsize],
                 title = "Plate and Disc MPM",
