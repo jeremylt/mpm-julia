@@ -1,11 +1,11 @@
 # ------------------------------------------------------------------------------
 # 2D example - two discs
-#   Impact of two identical elastic bodies
+#   impact of two identical elastic bodies
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
-# Libraries
-#   Note: Plots needs to be installed to use
+# libraries
+#   note: Plots needs to be installed to use
 # ------------------------------------------------------------------------------
 
 using Printf

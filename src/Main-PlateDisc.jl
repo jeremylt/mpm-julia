@@ -1,12 +1,12 @@
 # ------------------------------------------------------------------------------
 # 2D example - plate and disc
-#   Impact of elastic steel disc with plastic aluminum target
-#   Perfectly plastic von-Mises model
+#   impact of elastic steel disc with plastic aluminum target
+#   perfectly plastic von-Mises model
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
-# Libraries
-#   Note: Plots needs to be installed to use
+# libraries
+#   note: Plots needs to be installed to use
 # ------------------------------------------------------------------------------
 
 using Printf
