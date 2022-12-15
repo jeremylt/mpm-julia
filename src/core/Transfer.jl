@@ -67,7 +67,7 @@ function transfergridtomaterialpoint(materialpoint::MaterialPoint, dt::Float64, 
         interpolation, gradient = getbasismatrices(materialpoint, gridpoint, grid)
 
         v = zeros(2)
-        if (gridpoint.m > 1.0e-12)
+        if (gridpoint.m > eps(Float64) * 100.0)
             v = gridpoint.p / gridpoint.m
             materialpoint.v += dt * (interpolation * gridpoint.f / gridpoint.m)
             dx += dt * (interpolation * gridpoint.p / gridpoint.m)
@@ -116,8 +116,10 @@ function transfergridtomaterialpointwithyieldpass1(
     for index in adjacentgridindices
         gridpoint = grid.points[index]
 
-        interpolation, gradient = getbasismatrices(materialpoint, gridpoint, grid)
-        materialpoint.v += dt * (interpolation * gridpoint.f / gridpoint.m)
+        if (gridpoint.m > eps(Float64) * 100.0)
+            interpolation, gradient = getbasismatrices(materialpoint, gridpoint, grid)
+            materialpoint.v += dt * (interpolation * gridpoint.f / gridpoint.m)
+        end
     end
 
     # adjust grid point velocity
@@ -144,7 +146,7 @@ function transfergridtomaterialpointwithyieldpass2(
 
         interpolation, gradient = getbasismatrices(materialpoint, gridpoint, grid)
 
-        if (gridpoint.m > 1.0e-12)
+        if (gridpoint.m > eps(Float64) * 100.0)
             dx += dt * (interpolation * gridpoint.p / gridpoint.m)
             materialpoint.dF += dt * gridpoint.v * gradient'
         end
