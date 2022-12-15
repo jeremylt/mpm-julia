@@ -1,5 +1,7 @@
 # ------------------------------------------------------------------------------
 # 2D example - plate and disc
+#   Impact of elastic steel disc with plastic aluminum target
+#   Perfectly plastic von-Mises model
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
@@ -239,7 +241,7 @@ function main()
         times,
         [strainenergies, kineticenergies, totalenergies, energylosses],
         title = "Strain Energy and Kinetic Energy",
-        label = ["Strain Energy" "Kinetic Energy" "Total Energy" "Energy Loss"],
+        label = ["Strain Energy (U)" "Kinetic Energy (K)" "Total Energy (K + U)" "Energy Loss"],
         xlabel = "time",
     )
     savefig("PlateDisc-StrainEnergyAndKineticEnergy.png")

@@ -208,7 +208,7 @@ function main()
         times,
         [strainenergies, kineticenergies, totalenergies, energylosses],
         title = "Strain Energy and Kinetic Energy",
-        label = ["Strain Energy" "Kinetic Energy" "Total Energy" "Energy Loss"],
+        label = ["Strain Energy (U)" "Kinetic Energy (K)" "Total Energy (K + U)" "Energy Loss"],
         xlabel = "time",
     )
     savefig("TwoDisc-StrainEnergyAndKineticEnergy.png")
