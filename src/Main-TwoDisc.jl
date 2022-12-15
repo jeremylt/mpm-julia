@@ -18,6 +18,12 @@ using Plots
 include("core/MPM.jl")
 
 # ------------------------------------------------------------------------------
+# logging level
+# ------------------------------------------------------------------------------
+
+quiet = false
+
+# ------------------------------------------------------------------------------
 # driver
 # ------------------------------------------------------------------------------
 
@@ -33,7 +39,9 @@ function main()
     σ_yield = 1.0e24 # yield stress
 
     # setup grid
-    println("--------- Background grid ---------")
+    if (!quiet)
+        println("--------- Background grid ---------")
+    end
     numcells = 20
     grid = Grid(domainsize, domainsize, numcells + 1, numcells + 1)
 
@@ -42,13 +50,17 @@ function main()
     pointsize = radius / 8.0
 
     # first disc
-    println("--------- First disc ---------")
+    if (!quiet)
+        println("--------- First disc ---------")
+    end
     center = [0.2, 0.2]
     firstdisc =
         creatediscmaterialdomain(center, radius, pointsize, [0.1, 0.1], g, ρ, E, ν, σ_yield)
 
     # second disc
-    println("--------- Second disc ---------")
+    if (!quiet)
+        println("--------- Second disc ---------")
+    end
     center = [0.8, 0.8]
     seconddisc = creatediscmaterialdomain(
         center,
@@ -72,11 +84,13 @@ function main()
     for materialpoint in materialpoints
         totalenergy += 0.5 * (materialpoint.v[1]^2 + materialpoint.v[2]^2) * materialpoint.m
     end
-    println("--------- Total material points ---------")
-    println("  mass: ", totalmass)
-    println("  total energy: ", totalenergy)
-    println("  number of material points: ", length(materialpoints))
-    println()
+    if (!quiet)
+        println("--------- Total material points ---------")
+        println("  mass: ", totalmass)
+        println("  total energy: ", totalenergy)
+        println("  number of material points: ", length(materialpoints))
+        println()
+    end
 
     # total energy
     totalenergy = 0.0
@@ -95,14 +109,18 @@ function main()
     # time stepping loop
     dt = 1.0e-3
     t_f = 3.8e0
-    println("--------- Time stepping loop ---------")
-    println("  start time: ", 0.0)
-    println("  stop time: ", t_f)
-    println("  step size: ", dt)
-    println()
+    if (!quiet)
+        println("--------- Time stepping loop ---------")
+        println("  start time: ", 0.0)
+        println("  stop time: ", t_f)
+        println("  step size: ", dt)
+        println()
+    end
     step = 0
     for t = 0.0:dt:t_f
-        println("  current time: ", t)
+        if (!quiet)
+            println("  current time: ", t)
+        end
 
         # plot current locations
         if (step % plotincrement == 0)
@@ -177,27 +195,30 @@ function main()
         end
 
         # log progress
-        p = zeros(2)
-        for materialpoint in materialpoints
-            p += materialpoint.p
+        if (!quiet)
+            p = zeros(2)
+            for materialpoint in materialpoints
+                p += materialpoint.p
+            end
+            totalmass = 0.0
+            for point in materialpoints
+                totalmass += point.m
+            end
+            println("  momentum (x, y): (", p[1], ", ", p[2], ")")
+            println("  mass: ", totalmass)
+            println("  strain energy: ", strainenergy)
+            println("  kinetic energy: ", kineticenergy)
+            println("  total energy: ", strainenergy + kineticenergy)
+            println(
+                "  energy loss: ",
+                energyloss,
+                " (",
+                100.0 * abs(energyloss) / totalenergy,
+                "%)",
+            )
         end
-        totalmass = 0.0
-        for point in materialpoints
-            totalmass += point.m
-        end
-        println("  momentum (x, y): (", p[1], ", ", p[2], ")")
-        println("  mass: ", totalmass)
-        println("  strain energy: ", strainenergy)
-        println("  kinetic energy: ", kineticenergy)
-        println("  total energy: ", strainenergy + kineticenergy)
-        println(
-            "  energy loss: ",
-            energyloss,
-            " (",
-            100.0 * abs(energyloss) / totalenergy,
-            "%)",
-        )
         println()
+
 
         # increment plot step counter
         step += 1
@@ -209,6 +230,7 @@ function main()
         [strainenergies, kineticenergies, totalenergies, energylosses],
         title = "Strain Energy and Kinetic Energy",
         label = ["Strain Energy (U)" "Kinetic Energy (K)" "Total Energy (K + U)" "Energy Loss"],
+        legend = :right,
         xlabel = "time",
     )
     savefig("TwoDisc-StrainEnergyAndKineticEnergy.png")

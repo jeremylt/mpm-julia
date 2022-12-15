@@ -45,20 +45,22 @@ function creatediscmaterialdomain(
     end
 
     # print information
-    discmass = 0.0
-    for point in domain
-        discmass += point.m
+    if (!quiet)
+        discmass = 0.0
+        for point in domain
+            discmass += point.m
+        end
+        println("Disc domain:")
+        println("  center: ", center)
+        println("  radius: ", radius)
+        println("  total mass: ", @sprintf("%.3f", discmass))
+        println("  veloctiy (x, y): (", domain[1].v[1], ", ", domain[1].v[2], ")")
+        println("  number of material points: ", length(domain))
+        println("  Young's modulus: ", domain[1].E)
+        println("  Poisson's ratio: ", domain[1].ν)
+        println("  Yield stress: ", domain[1].σ_yield)
+        println()
     end
-    println("Disc domain:")
-    println("  center: ", center)
-    println("  radius: ", radius)
-    println("  total mass: ", @sprintf("%.3f", discmass))
-    println("  veloctiy (x, y): (", domain[1].v[1], ", ", domain[1].v[2], ")")
-    println("  number of material points: ", length(domain))
-    println("  Young's modulus: ", domain[1].E)
-    println("  Poisson's ratio: ", domain[1].ν)
-    println("  Yield stress: ", domain[1].σ_yield)
-    println()
 
     # return
     domain

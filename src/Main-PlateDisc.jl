@@ -19,6 +19,12 @@ using Plots
 include("core/MPM.jl")
 
 # ------------------------------------------------------------------------------
+# logging level
+# ------------------------------------------------------------------------------
+
+quiet = true
+
+# ------------------------------------------------------------------------------
 # driver
 # ------------------------------------------------------------------------------
 
@@ -30,7 +36,9 @@ function main()
     g = 0.0
 
     # setup grid
-    println("--------- Background grid ---------")
+    if (!quiet)
+        println("--------- Background grid ---------")
+    end
     numcells = 50
     grid = Grid(domainsize, domainsize, numcells + 1, numcells + 1)
 
@@ -43,7 +51,9 @@ function main()
     end
 
     # Plate
-    println("--------- Plate ---------")
+    if (!quiet)
+        println("--------- Plate ---------")
+    end
     ρ = 2700e-12    # density
     E = 78.2e3      # Young's modulus
     ν = 0.3         # Poisson's ratio
@@ -71,7 +81,9 @@ function main()
     ν = 0.3          # Poisson's ratio
     σ_yield = 1.0e24 # yield stress
     radius = domainsize / 12.0
-    println("--------- Disc ---------")
+    if (!quiet)
+        println("--------- Disc ---------")
+    end
     center = [domainsize / 2.0, domainsize * 5.0 / 6.0]
     disc = creatediscmaterialdomain(
         center,
@@ -95,11 +107,13 @@ function main()
     for materialpoint in materialpoints
         totalenergy += 0.5 * (materialpoint.v[1]^2 + materialpoint.v[2]^2) * materialpoint.m
     end
-    println("--------- Total material points ---------")
-    println("  mass: ", totalmass)
-    println("  total energy: ", totalenergy)
-    println("  number of material points: ", length(materialpoints))
-    println()
+    if (!quiet)
+        println("--------- Total material points ---------")
+        println("  mass: ", totalmass)
+        println("  total energy: ", totalenergy)
+        println("  number of material points: ", length(materialpoints))
+        println()
+    end
 
     # plotted quantities
     plotincrement = 100
@@ -112,14 +126,18 @@ function main()
     # time stepping loop
     dt = 1.0e-8
     t_f = 4.0e-5
-    println("--------- Time stepping loop ---------")
-    println("  start time: ", 0.0)
-    println("  stop time: ", t_f)
-    println("  step size: ", dt)
-    println()
+    if (!quiet)
+        println("--------- Time stepping loop ---------")
+        println("  start time: ", 0.0)
+        println("  stop time: ", t_f)
+        println("  step size: ", dt)
+        println()
+    end
     step = 0
     for t = 0.0:dt:t_f
-        println("  current time: ", t)
+        if (!quiet)
+            println("  current time: ", t)
+        end
 
         # plot current locations
         if (step % plotincrement == 0)
@@ -210,26 +228,28 @@ function main()
         end
 
         # log progress
-        p = zeros(2)
-        for materialpoint in materialpoints
-            p += materialpoint.p
+        if (!quiet)
+            p = zeros(2)
+            for materialpoint in materialpoints
+                p += materialpoint.p
+            end
+            totalmass = 0.0
+            for point in materialpoints
+                totalmass += point.m
+            end
+            println("  momentum (x, y): (", p[1], ", ", p[2], ")")
+            println("  mass: ", totalmass)
+            println("  strain energy: ", strainenergy)
+            println("  kinetic energy: ", kineticenergy)
+            println("  total energy: ", strainenergy + kineticenergy)
+            println(
+                "  energy loss: ",
+                energyloss,
+                " (",
+                100.0 * abs(energyloss) / totalenergy,
+                "%)",
+            )
         end
-        totalmass = 0.0
-        for point in materialpoints
-            totalmass += point.m
-        end
-        println("  momentum (x, y): (", p[1], ", ", p[2], ")")
-        println("  mass: ", totalmass)
-        println("  strain energy: ", strainenergy)
-        println("  kinetic energy: ", kineticenergy)
-        println("  total energy: ", strainenergy + kineticenergy)
-        println(
-            "  energy loss: ",
-            energyloss,
-            " (",
-            100.0 * abs(energyloss) / totalenergy,
-            "%)",
-        )
         println()
 
         # increment plot step counter

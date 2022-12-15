@@ -45,21 +45,23 @@ function createboxmaterialdomain(
     end
 
     # print information
-    boxmass = 0.0
-    for point in domain
-        boxmass += point.m
+    if (!quiet)
+        boxmass = 0.0
+        for point in domain
+            boxmass += point.m
+        end
+        println("Box domain:")
+        println("  lower left corner: ", lowerleftcorner)
+        println("  width (x): ", width)
+        println("  height (y): ", height)
+        println("  total mass: ", @sprintf("%.3f", boxmass))
+        println("  veloctiy (x, y): (", domain[1].v[1], ", ", domain[1].v[2], ")")
+        println("  number of material points: ", length(domain))
+        println("  Young's modulus: ", domain[1].E)
+        println("  Poisson's ratio: ", domain[1].ν)
+        println("  Yield stress: ", domain[1].σ_yield)
+        println()
     end
-    println("Box domain:")
-    println("  lower left corner: ", lowerleftcorner)
-    println("  width (x): ", width)
-    println("  height (y): ", height)
-    println("  total mass: ", @sprintf("%.3f", boxmass))
-    println("  veloctiy (x, y): (", domain[1].v[1], ", ", domain[1].v[2], ")")
-    println("  number of material points: ", length(domain))
-    println("  Young's modulus: ", domain[1].E)
-    println("  Poisson's ratio: ", domain[1].ν)
-    println("  Yield stress: ", domain[1].σ_yield)
-    println()
 
     # return
     domain
