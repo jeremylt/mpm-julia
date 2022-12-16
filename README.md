@@ -10,7 +10,7 @@ The paper this code is based upon can be found in the `paper` folder.
 
 ## Code
 
-The example and supporting code is found in the `src` folder.
+The examples and supporting code are found in the `src` folder.
 
 ## Original Code
 
