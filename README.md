@@ -15,3 +15,7 @@ The examples and supporting code are found in the `src` folder.
 ## Original Code
 
 See the original repository [here](https://github.com/vinhphunguyen/MPM-Julia).
+
+## Further Work
+
+See additional experimentation with this code [here](v).
